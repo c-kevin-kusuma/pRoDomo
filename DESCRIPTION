@@ -10,3 +10,4 @@ Encoding: UTF-8
 LazyData: true
 Imports:
   httr,dplyr,pryr,tibble,tidyr,readr,RCurl,rjson
+RoxygenNote: 7.2.2
