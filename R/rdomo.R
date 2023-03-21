@@ -740,6 +740,12 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         my_url <- paste0('https://',.self$domain,'/v1/projects/',project_id, '/lists/', list_id,'/tasks')
                         out <- httr::content(httr::POST(my_url,my_headers,body=rjson::toJSON(task_def)))
                         return(out)
+                      },
+                      project_list_get=function(project_id){
+                        my_headers <- httr::add_headers(c(Authorization=paste('bearer',.self$get_access(),sep=' ')))
+                        my_url <- paste0('https://',.self$domain,'/v1/projects/', project_id, '/lists/')
+                        out <- httr::content(httr::GET(my_url,my_headers))
+                        return(out)
                       }
                     )
 )
