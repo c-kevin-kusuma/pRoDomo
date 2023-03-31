@@ -4,10 +4,20 @@ Title: Extend the capabilities of rdomo package
 Version: 0.1.0
 Author: Christian Kevin Kusuma
 Maintainer: The package maintainer <c.kevin.kusuma@gmail.com>
-Description: is a low-code data app platform that takes the power of BI to the next level to combine all your data and put it to work across any business process or workflow.
+Description: DOMO is a low-code data app platform that takes the power of BI to the next level to combine all your data and put it to work across any business process or workflow.
 License: `use_mit_license()`
 Encoding: UTF-8
 LazyData: true
 Imports:
-  httr,dplyr,pryr,tibble,tidyr,readr,RCurl,rjson
+  httr,
+  dplyr,
+  pryr,
+  tibble,
+  tidyr,
+  readr,
+  RCurl,
+  rjson,
+  magrittr,
+  rlist,
+  data.table
 RoxygenNote: 7.2.2
