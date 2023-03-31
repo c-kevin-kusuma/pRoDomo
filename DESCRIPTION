@@ -19,5 +19,6 @@ Imports:
   rjson,
   magrittr,
   rlist,
-  data.table
-RoxygenNote: 7.2.2
+  data.table,
+  foreach
+RoxygenNote: 7.2.3

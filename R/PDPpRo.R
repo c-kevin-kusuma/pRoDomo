@@ -3,7 +3,7 @@
 #' This function allows you to easily add, update, and delete PDP policies based on a DOMO dataset
 #' @param client_id A client_id that can be created on the developer.domo.com page.
 #' @param secret A secret that can created on the developer.domo.com page.
-#' @param ds_id An alpha-numeric string that uniquely identifies a DOMO dataset, can be found from the address bar.
+#' @param ds_id An alpha-numeric string that uniquely identifies a DOMO dataset, can be found on the address bar. The dataset must include `Dataset iD`, `Policy Name`, `Policy Column`, `User ID`, and `Policy Value` fields.
 #' @param parallel Provides an option to use parallel feature from the "Foreach" package.
 #' @examples PDPpRo(client_id = client_id,
 #'   secret = secret,
@@ -22,6 +22,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
   if (!requireNamespace("rlist", quietly = TRUE)) {stop("Package \"rlist\" must be installed to use this function.", call. = FALSE)}
   if (!requireNamespace("dplyr", quietly = TRUE)) {stop("Package \"dplyr\" must be installed to use this function.", call. = FALSE)}
   if (!requireNamespace("data.table", quietly = TRUE)) {stop("Package \"data.table\" must be installed to use this function.", call. = FALSE)}
+  if (!requireNamespace("foreach", quietly = TRUE)) {stop("Package \"foreach\" must be installed to use this function.", call. = FALSE)}
 
 
   # Check For Parallelism
@@ -29,6 +30,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
 
 
   # Functions
+  `%dopar%` <- foreach::`%dopar%`
   `%!in%` <- Negate(`%in%`)
   `%!like%` <- Negate(data.table::`%like%`)
   extractPdp <- function(x) {
@@ -85,7 +87,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
     my.cluster <- parallel::makeCluster(n.cores, type = "PSOCK")
     doParallel::registerDoParallel(cl = my.cluster)
 
-    foreach(a = 1:nrow(pdpDs)) %dopar% {
+    foreach::foreach(a = 1:nrow(pdpDs), .packages = c('magrittr', 'dplyr')) %dopar% {
       if(nrow(pdpDs) == 0){break} else{
         dsID <- pdpDs$`Dataset ID`[a]
         polColumn <- pdpDs$`Policy Column`[a]
