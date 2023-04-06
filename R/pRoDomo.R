@@ -741,11 +741,30 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         out <- httr::content(httr::POST(my_url,my_headers,body=rjson::toJSON(task_def)))
                         return(out)
                       },
-                      project_list_get=function(project_id){
+                      project_list_get=function(project_id, df_output=TRUE){
                         my_headers <- httr::add_headers(c(Authorization=paste('bearer',.self$get_access(),sep=' ')))
                         my_url <- paste0('https://',.self$domain,'/v1/projects/', project_id, '/lists/')
                         out <- httr::content(httr::GET(my_url,my_headers))
+
+                        if( df_output ){
+                          to_convert <- tibble::tibble(info=out)
+                          out <- tidyr::unnest_wider(to_convert,info)
+                        }
+
+                        return(out)
+                      },
+                      projects_all=function(df_output=TRUE){
+                        my_headers <- httr::add_headers(c(Authorization=paste('bearer',.self$get_access(),sep=' ')))
+                        my_url <- paste0('https://',.self$domain,'/v1/projects')
+                        out <- httr::content(httr::GET(my_url,my_headers))
+
+                        if( df_output ){
+                          to_convert <- tibble::tibble(info=out)
+                          out <- tidyr::unnest_wider(to_convert,info)
+                        }
+
                         return(out)
                       }
+
                     )
 )
