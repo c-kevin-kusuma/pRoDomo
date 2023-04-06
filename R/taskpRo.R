@@ -30,7 +30,7 @@ taskpRo <- function(client_id, secret){
                   taskContributors = contributors, taskAttachmentCount = attachmentCount, taskTags = tags, taskArchived = archived)
 
   # Merge
-  out <- projects %>% dplyr::inner_join(lists) %>% dplyr::inner_join(tasks)
+  out <- projects %>% dplyr::left_join(lists) %>% dplyr::left_join(tasks)
 
   return(out)
 }
