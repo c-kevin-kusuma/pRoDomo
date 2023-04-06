@@ -706,7 +706,7 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         out <- httr::content(httr::GET(my_url,my_headers))
                         return(out)
                       },
-                      task_list=function(project_id, limit=0,offset=0, df_output=TRUE){
+                      task_list=function(project_id, limit=1,offset=0, df_output=TRUE){
                         "List all data sets"
                         my_headers <- httr::add_headers(c(Accept="application/json","Content-Type"="application/json",Authorization=paste('bearer',.self$get_access(),sep=' ')))
 
@@ -719,7 +719,7 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                           batch <- 50 #limit of what the API will return
                           while( n_ret > 0 ){
                             my_batches[[i]] <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/projects/',project_id,'/tasks?offset=',offset,'&limit=',limit,sep=''),my_headers,query=list(sort='name',limit=batch,offset=((i-1)*batch))))
-                            n_ret <- ifelse(length(my_batches[[i]]) >= batch,0,1)
+                            n_ret <- ifelse(length(my_batches[[i]]) < batch,0,1)
                             i <- i + 1
                           }
                           out <- unlist(my_batches,recursive=FALSE)
@@ -766,12 +766,12 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                           batch <- 50 #limit of what the API will return
                           while( n_ret > 0 ){
                             my_batches[[i]] <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/projects/','?offset=',offset,'&limit=',limit,sep=''),my_headers,query=list(sort='name',limit=batch,offset=((i-1)*batch))))
-                            n_ret <- ifelse(length(my_batches[[i]]) >= batch,0,1)
+                            n_ret <- ifelse(length(my_batches[[i]]) < batch,0,1)
                             i <- i + 1
                           }
                           out <- unlist(my_batches,recursive=FALSE)
                         }else{
-                          out <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/projects/','offset=',offset,'&limit=',limit,sep=''),my_headers,query=list(sort='name',limit=limit,offset=offset)))
+                          out <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/projects/','?offset=',offset,'&limit=',limit,sep=''),my_headers,query=list(sort='name',limit=limit,offset=offset)))
                         }
 
                         if( df_output ){
