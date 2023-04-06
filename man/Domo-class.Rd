@@ -34,6 +34,8 @@ All methods documented separately via standard documentation methods.
 
 \item{\code{ds_update(ds_id, df_up)}}{Update an existing data set.}
 
+\item{\code{projects_all(limit = 0, offset = 0, df_output = TRUE)}}{List all data sets}
+
 \item{\code{task_list(project_id, limit = 0, offset = 0, df_output = TRUE)}}{List all data sets}
 }}
 
