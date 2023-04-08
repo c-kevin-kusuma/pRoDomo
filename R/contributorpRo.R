@@ -15,9 +15,9 @@ contributorpRo <- function(client_id, secret){
 
   p <- list()
   for (i in 1:length(projects)) {
-    p[[i]] <- dplyr::tibble(projectId = projects[[i]]$id, user = projects[[i]]$members %>% unlist())
+    p[[i]] <- dplyr::tibble(projectId = projects[[i]]$id,projectOwnedBy = projects[[i]]$createdBy, projectName = projects[[i]]$name, user = projects[[i]]$members %>% unlist())
   }
-  p <- bind_rows(p)
+  p <- bind_rows(p) %>% dplyr::mutate(projectMember = user)
 
 
   # All Tasks
@@ -25,14 +25,17 @@ contributorpRo <- function(client_id, secret){
   for (i in 1:length(projects)) {tasks[[i]] <- domo$task_list(project_id = projects[[i]]$id)}
   tasks <- dplyr::bind_rows(tasks)
 
-  contributor <- list()
+  t <- list()
   for (i in 1:nrow(tasks)) {
-    a <- domo$task_get(project_id = tasks$projectId[i], list_id = tasks$projectListId[i], task_id = tasks$id[i])
-    contributor[[i]] <- dplyr::tibble(projectId = tasks$projectId[i], listId = tasks$projectListId[i], taskId = tasks$id[i], user = a$contributors %>% unlist())
+    t[[i]] <- merge(tibble(projectId = tasks$projectId[i], listId = tasks$projectListId[i], taskId = tasks$id[i], taskName = tasks$taskName[i], taskOwnedBy = tasks$createdBy[i]),
+                    tibble(user = unlist(tasks$contributors[i])))
   }
-  contributor <- bind_rows(contributor)
+  t <- dplyr::bind_rows(t) %>% dplyr::mutate(taskContributor = user) %>% dplyr::left_join(p %>% dplyr::select(projectId, projectOwnedBy, projectName) %>% unique())
+
   # Merge
-  out <- p %>% left_join(contributor)
+  out <- dplyr::full_join(p, t) %>%
+    dplyr::select(projectId, projectName, projectOwnedBy, projectMember, listId, taskId, taskName, taskOwnedBy, taskContributor)
+
 
   return(out)
 }
