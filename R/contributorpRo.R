@@ -27,7 +27,7 @@ contributorpRo <- function(client_id, secret){
 
   t <- list()
   for (i in 1:nrow(tasks)) {
-    t[[i]] <- merge(tibble(projectId = tasks$projectId[i], listId = tasks$projectListId[i], taskId = tasks$id[i], taskName = tasks$taskName[i], taskOwnedBy = tasks$createdBy[i]),
+    t[[i]] <- merge(tibble(projectId = tasks$projectId[i], listId = tasks$projectListId[i], taskId = tasks$id[i], taskName = tasks$taskName[i], taskOwnedBy = tasks$ownedBy[i]),
                     tibble(user = unlist(tasks$contributors[i])))
   }
   t <- dplyr::bind_rows(t) %>% dplyr::mutate(taskContributor = user) %>% dplyr::left_join(p %>% dplyr::select(projectId, projectOwnedBy, projectName) %>% unique())
