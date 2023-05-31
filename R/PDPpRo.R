@@ -3,7 +3,7 @@
 #' This function allows you to easily add, update, and delete PDP policies based on a DOMO dataset
 #' @param client_id A client_id that can be created on the developer.domo.com page.
 #' @param secret A secret that can created on the developer.domo.com page.
-#' @param ds_id An alpha-numeric string that uniquely identifies a DOMO dataset, can be found on the address bar. The dataset must include `Dataset iD`, `Policy Name`, `Policy Column`, `User ID`, and `Policy Value` fields.
+#' @param ds_id An alpha-numeric string that uniquely identifies a DOMO dataset, can be found on the address bar. The dataset must include `Dataset ID`, `Policy Name`, `Policy Column`, `User ID`, and `Policy Value` fields.
 #' @param parallel Provides an option to use parallel feature from the "Foreach" package.
 #' @examples PDPpRo(client_id = client_id,
 #'   secret = secret,
@@ -36,30 +36,11 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
   extractPdp <- function(x) {
     if(length(x)==0) {break}
     for (i in 1:length(x)) {
-      if(length(x[[i]]$users) == 0){users <- dplyr::tibble(users = '')} else{users <- dplyr::tibble(users = x[[i]]$users) %>% dplyr::mutate(users = as.character(users)) %>% dplyr::arrange(users) %>% dplyr::group_by() %>% dplyr::summarise(users = paste(users, collapse = '|'))} # Extract Users
-      if(length(x[[i]]$filters) == 0){filters <- dplyr::tibble(column = '', values = '')} else{filters <- x[[i]]$filters %>% rlist::list.stack() %>% dplyr::select(column, values) %>% dplyr::mutate(values = as.character(values)) %>% dplyr::arrange(values) %>% dplyr::group_by(column) %>% dplyr::summarise(values = paste(values, collapse = '|'))}
-      x[[i]] <- dplyr::tibble(`Policy ID` = x[[i]]$id, `Policy Name` = x[[i]]$name, `Policy Column` = filters$column, `User ID` = users$users, `Policy Value` = filters$values)}
+      if(length(x[[i]]$users) == 0){users <- dplyr::tibble(users = '')} else{users <- dplyr::tibble(users = x[[i]]$users) %>% dplyr::mutate(users = as.character(users)) %>% dplyr::arrange(users)} # Extract Users
+      if(length(x[[i]]$filters) == 0){filters <- dplyr::tibble(column = '', values = '')} else{filters <- x[[i]]$filters %>% rlist::list.stack() %>% dplyr::select(column, values) %>% dplyr::mutate(values = as.character(values)) %>% dplyr::arrange(values)}
+      x[[i]] <- dplyr::tibble(`Policy ID` = x[[i]]$id, `Policy Name` = x[[i]]$name) %>% merge(users) %>% merge(filters) %>% dplyr::rename(`Policy Column` = column, `User ID` = users, `Policy Value` = values)}
 
     y <- dplyr::bind_rows(x)
-  }
-  reorderPdp <- function(x) {
-    z <- list()
-    for (i in 1:nrow(x)) {
-      if(nrow(x) == 0){break} else{
-        di = x$`Dataset ID`[i]
-        pm = x$`Policy Name`[i]
-        pc = x$`Policy Column`[i]
-
-        `User ID` <- dplyr::tibble(`User ID` = strsplit(x$`User ID`[i], '|', fixed = TRUE) %>% unlist() %>% as.character())
-        `User ID` <- `User ID` %>% dplyr::arrange(`User ID`) %>% dplyr::group_by() %>% dplyr::summarise(`User ID` = paste(`User ID`, collapse = '|'))
-
-        `Policy Value` <- dplyr::tibble(`Policy Value` = strsplit(x$`Policy Value`[i], '|', fixed = TRUE) %>% unlist() %>% as.character())
-        `Policy Value` <- `Policy Value` %>% dplyr::arrange(`Policy Value`) %>% dplyr::group_by() %>% dplyr::summarise(`Policy Value` = paste(`Policy Value`, collapse = '|'))
-
-        z[[i]] <- dplyr::tibble(`Dataset ID` = di, `Policy Name` = pm, `Policy Column` = pc, `User ID` = `User ID`$`User ID`, `Policy Value` = `Policy Value`$`Policy Value`)
-      }
-    }
-    z <- bind_rows(z)
   }
   createPdpList <- function(x){
     if('Policy ID' %in% colnames(x)){id <- as.integer(x$`Policy ID`)} else{id <- NULL}
@@ -94,7 +75,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
 
         # Current PDP List
         curPolicy <- domo$pdp_list(ds = dsID)
-        curPolicy <- extractPdp(curPolicy) %>% dplyr::filter(`Policy Name` %!like% 'AA - Restricted' & `Policy Name` != 'All Rows')
+        curPolicy <- extractPdp(curPolicy) %>% dplyr::filter(`Policy Name` %!like% 'AA - Restricted' & `Policy Name` != 'All Rows') %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy ID`, `Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
         # IF NO current policies found on the dataset
         if(nrow(curPolicy) == 0){
@@ -104,8 +85,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
         }
         else{
           # Correct PDP List
-          corPolicy <- pdpData %>% dplyr::filter(`Dataset ID` == dsID)
-          corPolicy <- corPolicy %>% reorderPdp()
+          corPolicy <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
           # Action List
           addList <- dplyr::anti_join(corPolicy, curPolicy, by = c('Policy Name'='Policy Name'))
@@ -120,21 +100,21 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
           for (i in 1:nrow(addList)) { if(nrow(addList) == 0) {break} else{domo$pdp_create(ds = dsID, policy_def = createPdpList(addList[i,]))} }
 
           # UPDATE POLICIES
-          for (i in 1:nrow(updList)) { if(nrow(updList) == 0) {break} else{domo$pdp_update(ds = dsID, policy = updList$`Policy ID`[i], policy_def = createPdpList(updList[i,]))} }
+          for (i in 1:nrow(updList)) { if(nrow(updList) == 0) {break} else{domo$pdp_update(ds = dsID, policy = updList$`Policy ID`[i], policy_def = createPdpList(updList[1,]))} }
         }
       }
     }
     parallel::stopCluster(cl = my.cluster)
-    }
+  }
   else {
-    for(i in 1:nrow(pdpDs)){
+    for(b in 1:nrow(pdpDs)){
       if(nrow(pdpDs) == 0){break} else{
-        dsID <- pdpDs$`Dataset ID`[a]
-        polColumn <- pdpDs$`Policy Column`[a]
+        dsID <- pdpDs$`Dataset ID`[b]
+        polColumn <- pdpDs$`Policy Column`[b]
 
         # Current PDP List
         curPolicy <- domo$pdp_list(ds = dsID)
-        curPolicy <- extractPdp(curPolicy) %>% dplyr::filter(`Policy Name` %!like% 'AA - Restricted' & `Policy Name` != 'All Rows')
+        curPolicy <- extractPdp(curPolicy) %>% dplyr::filter(`Policy Name` %!like% 'AA - Restricted' & `Policy Name` != 'All Rows') %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy ID`, `Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
         # IF NO current policies found on the dataset
         if(nrow(curPolicy) == 0){
@@ -144,8 +124,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
         }
         else{
           # Correct PDP List
-          corPolicy <- pdpData %>% dplyr::filter(`Dataset ID` == dsID)
-          corPolicy <- corPolicy %>% reorderPdp()
+          corPolicy <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
           # Action List
           addList <- dplyr::anti_join(corPolicy, curPolicy, by = c('Policy Name'='Policy Name'))
@@ -166,5 +145,4 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
     }
   }
 }
-
 
