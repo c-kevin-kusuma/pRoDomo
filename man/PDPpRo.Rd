@@ -11,7 +11,7 @@ PDPpRo(client_id, secret, ds_id, parallel = FALSE)
 
 \item{secret}{A secret that can created on the developer.domo.com page.}
 
-\item{ds_id}{An alpha-numeric string that uniquely identifies a DOMO dataset, can be found on the address bar. The dataset must include `Dataset iD`, `Policy Name`, `Policy Column`, `User ID`, and `Policy Value` fields.}
+\item{ds_id}{An alpha-numeric string that uniquely identifies a DOMO dataset, can be found on the address bar. The dataset must include `Dataset ID`, `Policy Name`, `Policy Column`, `User ID`, and `Policy Value` fields.}
 
 \item{parallel}{Provides an option to use parallel feature from the "Foreach" package.}
 }
