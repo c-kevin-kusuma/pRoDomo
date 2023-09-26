@@ -700,6 +700,36 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         out <- .self$domo_content(rr)
                         return(out)
                       },
+                      activity_log=function(limit=0,offset=0,start=NULL,end=NULL,df_output=TRUE){
+                        "List all Activities"
+                        my_headers <- httr::add_headers(c(Accept="application/json","Content-Type"="application/json",Authorization=paste('bearer',.self$get_access(),sep=' ')))
+
+                        out <- -1
+
+                        if( limit < 1 ){
+                          n_ret <- 1
+                          my_batches <- list()
+                          i <- 1
+                          batch <- 1000 #limit of what the API will return
+                          while( n_ret > 0 ){
+                            my_batches[[i]] <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/audit',sep=''),my_headers,query=list(limit=batch,offset=((i-1)*batch),start=start,end=end)))
+                            n_ret <- ifelse(length(my_batches[[i]]) < batch,0,1)
+                            i <- i + 1
+                          }
+                          out <- unlist(my_batches,recursive=FALSE)
+                        }else{
+                          out <- httr::content(httr::GET(paste('https://',.self$domain,'/v1/audit',sep=''),my_headers,query=list(limit=limit,offset=offset)))
+                        }
+
+                        if( df_output ){
+                          to_convert <- tibble::tibble(info=out)
+                          out <- tidyr::unnest_wider(to_convert,info)
+                          out1 <- dplyr::select(out, c('time', 'userName', 'userId', 'userType', 'actionType', 'objectName', 'objectId', 'objectType', 'eventText'))
+                        }
+
+                        return(out1)
+
+                      },
                       task_get=function(project_id, list_id, task_id){
                         my_headers <- httr::add_headers(c(Authorization=paste('bearer',.self$get_access(),sep=' ')))
                         my_url <- paste0('https://',.self$domain,'/v1/projects/', project_id, '/lists/', list_id, '/tasks/', task_id)
