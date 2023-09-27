@@ -724,10 +724,10 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         if( df_output ){
                           to_convert <- tibble::tibble(info=out)
                           out <- tidyr::unnest_wider(to_convert,info)
-                          out1 <- dplyr::select(out, c('time', 'userName', 'userId', 'userType', 'actionType', 'objectName', 'objectId', 'objectType', 'eventText'))
+                          out <- dplyr::select(out, c('time', 'userName', 'userId', 'userType', 'actionType', 'objectName', 'objectId', 'objectType', 'eventText'))
                         }
 
-                        return(out1)
+                        return(out)
 
                       },
                       task_get=function(project_id, list_id, task_id){
