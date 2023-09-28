@@ -722,9 +722,12 @@ Domo <- setRefClass("Domo",contains='DomoUtilities',
                         }
 
                         if( df_output ){
-                          to_convert <- tibble::tibble(info=out)
-                          out <- tidyr::unnest_wider(to_convert,info)
-                          out <- dplyr::select(out, c('time', 'userName', 'userId', 'userType', 'actionType', 'objectName', 'objectId', 'objectType', 'eventText'))
+                          out1 <- list()
+                          for (i in 1:length(out)) {
+                            out1[[i]] <- out[[i]] %>% list() %>% rlist::list.stack() %>% dplyr::tibble()
+                          }
+                          out1 <- dplyr::bind_rows(out1)
+                          out <- dplyr::select(out1, c('time', 'userName', 'userId', 'userType', 'actionType', 'objectName', 'objectId', 'objectType', 'eventText'))
                         }
 
                         return(out)
