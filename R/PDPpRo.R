@@ -79,7 +79,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
       curPolicyWide <- curPolicyLong %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy ID`, `Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
       # Correct PDP List
-      corPolicyLong <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% select(-`Dataset ID`) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::mutate(cor = 1)
+      corPolicyLong <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% select(-`Dataset ID`) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::left_join(curPolicyWide %>% dplyr::select(`Policy ID`, `Policy Name`) %>% unique()) %>% dplyr::mutate(cor = 1)
       corPolicyWide <- corPolicyLong %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
       # IF NO current policies can be found on the dataset
@@ -118,7 +118,7 @@ PDPpRo <- function(client_id, secret, ds_id, parallel = FALSE) {
     curPolicyWide <- curPolicyLong %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy ID`, `Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
     # Correct PDP List
-    corPolicyLong <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% select(-`Dataset ID`) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::mutate(cor = 1)
+    corPolicyLong <- pdpData %>% dplyr::filter(`Dataset ID` == dsID) %>% select(-`Dataset ID`) %>% dplyr::mutate(`User ID` = as.character(`User ID`), `Policy Value` = as.character(`Policy Value`)) %>% dplyr::left_join(curPolicyWide %>% dplyr::select(`Policy ID`, `Policy Name`) %>% unique()) %>% dplyr::mutate(cor = 1)
     corPolicyWide <- corPolicyLong %>% dplyr::arrange(`Policy Name`, `User ID`, `Policy Value`) %>% dplyr::group_by(`Policy Name`, `Policy Column`) %>% dplyr::summarise(`User ID` = paste(unique(`User ID`), collapse = '|'), `Policy Value` = paste(unique(`Policy Value`), collapse = '|'))
 
     # IF NO current policies can be found on the dataset
